@@ -297,6 +297,26 @@ func (pages PageSlice) Children(root string) *PageSlice {
 	return &children
 }
 
+func (pages PageSlice) MatchPath(pattern string) *PageSlice {
+    matches := PageSlice{}
+    for _, page := range pages {
+        if m, e := filepath.Match(pattern, page.Path); e == nil && m {
+            matches = append(matches, page)
+        }
+    }
+    return &matches
+}
+
+func (pages PageSlice) MatchSource(pattern string) *PageSlice {
+    matches := PageSlice{}
+    for _, page := range pages {
+        if m, e := filepath.Match(pattern, page.Source); e == nil && m {
+            matches = append(matches, page)
+        }
+    }
+    return &matches
+}
+
 func (pages PageSlice) WithTag(tag string) *PageSlice {
 	tagged := make(PageSlice, 0)
 
