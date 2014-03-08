@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -354,4 +355,57 @@ func (pages PageSlice) ByPath(s string) *Page {
 		}
 	}
 	return nil
+}
+
+
+type StringSortable struct {
+    pages PageSlice
+    val func (e *Page) string
+}
+
+// Sortable interface
+func (s StringSortable) Len() int {
+    return len(s.pages)
+}
+
+func (s *StringSortable) Swap(i, j int) {
+    s.pages[i], s.pages[j] = s.pages[j], s.pages[i]
+}
+
+func (s *StringSortable) Less(i, j int) bool {
+    return s.val(s.pages[i]) < s.val(s.pages[j])
+}
+
+type FloatSortable struct {
+    StringSortable
+}
+
+func (s *FloatSortable) Less(i, j int) bool {
+    a, _ := strconv.ParseFloat(s.val(s.pages[i]), 64)
+    b, _ := strconv.ParseFloat(s.val(s.pages[j]), 64)
+    return a < b
+}
+
+
+func (pages PageSlice) SortedByOther(s string) PageSlice {
+    args := strings.SplitN(s, ":", 2)
+    if len(args) == 1 {
+        args = append(args, "string")
+    }
+    key := strings.Title(args[0])
+    ppages := make(PageSlice, len(pages))
+    copy(ppages, pages)
+    sortable := StringSortable{
+        ppages,
+        func (p *Page) string { return p.Other[key] },
+    }
+
+    switch args[1] {
+    case "int", "float":
+        sort.Sort(&FloatSortable{sortable})
+    default:
+        sort.Sort(&sortable)
+    }
+
+    return ppages
 }
